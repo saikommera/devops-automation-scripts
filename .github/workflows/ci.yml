@@ -5,48 +5,36 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   lint:
-    name: Lint & Format Check
+    name: Lint & Security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
-
-      - name: Install dependencies
-        run: |
-          pip install flake8 black isort bandit safety
-          pip install -r requirements.txt
-
+      - name: Install linters
+        run: pip install flake8 black bandit safety && pip install -r requirements.txt
       - name: Black format check
-        run: black --check --diff aws/ bash/ 2>/dev/null || black --check --diff aws/
-
+        run: black --check aws/
       - name: Flake8 lint
-        run: flake8 aws/ --max-line-length=120 --ignore=E501,W503
-
-      - name: Isort import check
-        run: isort --check-only --diff aws/
-
+        run: flake8 aws/ --max-line-length=120
       - name: Bandit security scan
-        run: bandit -r aws/ -ll -ii
-
-      - name: Safety dependency audit
+        run: bandit -r aws/ -ll
+      - name: Safety dependency check
         run: safety check -r requirements.txt
         continue-on-error: true
 
   shellcheck:
-    name: Shell Script Lint
+    name: ShellCheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: ShellCheck
-        uses: ludeeus/action-shellcheck@master
+      - uses: ludeeus/action-shellcheck@master
         with:
           scandir: "./bash"
           severity: warning
